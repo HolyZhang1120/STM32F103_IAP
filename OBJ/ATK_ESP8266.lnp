@@ -13,6 +13,7 @@
 "..\obj\w25qxx.o"
 "..\obj\wdg.o"
 "..\obj\stmflash.o"
+"..\obj\key.o"
 "..\obj\stm32f10x_usart.o"
 "..\obj\stm32f10x_spi.o"
 "..\obj\stm32f10x_i2c.o"

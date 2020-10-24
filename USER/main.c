@@ -8,14 +8,16 @@
 #include <stdlib.h>
 #include "wdg.h"
 #include "stmflash.h"
+#include "key.h"
 
 #define Flash_ADDR    0x1000		//存入flash起始位置
 #define Read_SIZE    2048
 
 typedef  void (*iapfun)(void);				//定义一个函数类型的参数.
 
-#define FLASH_APP1_ADDR		0x08009000  	//第一个应用程序起始地址(存放在FLASH)
+#define FLASH_APP1_ADDR		0x08005000  	//第一个应用程序起始地址(存放在FLASH)
 											//保留0X08000000~0X08008FFF的空间为IAP使用
+#define FLASH_APP2_ADDR		0x08070000  	//第二个应用程序起始地址(存放备用程序)
 
 iapfun jump2app; 
 	
@@ -23,7 +25,7 @@ int main(void)
 {	 
 	u32 Size;
 	u16 l,read_num;	
-	u8 pack,*crc32_file,write_buf2[4] = {0};
+	u8 pack,*crc32_file,write_buf2[4] = {0},key;
 	
 	u16 *iapbuf; 
 	
@@ -38,6 +40,7 @@ int main(void)
 	uart_init(115200);	 	//串口初始化为115200
 
 	W25QXX_Init();				//初始化W25Q128
+	KEY_Init();
  	my_mem_init(SRAMIN);		//初始化内部内存池
 //	IWDG_Feed();//喂狗
 	delay_ms(10);
@@ -85,13 +88,30 @@ int main(void)
 		myfree(SRAMIN,iapbuf);
 		myfree(SRAMIN,crc32_file);   //释放内存	
 		printf("有固件\r\n");
-		if(((*(vu32*)(FLASH_APP1_ADDR+4))&0xFF000000)==0x08000000)//判断是否为0X08XXXXXX.
-		{	
-			if(((*(vu32*)FLASH_APP1_ADDR)&0x2FFE0000)==0x20000000)	//检查栈顶地址是否合法.
-			{ 
-				jump2app=(iapfun)*(vu32*)(FLASH_APP1_ADDR+4);		//用户代码区第二个字为程序开始地址(复位地址)		
-				MSR_MSP(*(vu32*)FLASH_APP1_ADDR);					//初始化APP堆栈指针(用户代码区的第一个字用于存放栈顶地址)
-				jump2app();									//跳转到APP.
+		
+		key=KEY_Scan(0);
+		if(key == WKUP_PRES)
+		{
+			if(((*(vu32*)(FLASH_APP2_ADDR+4))&0xFF000000)==0x08000000)//判断是否为0X08XXXXXX.
+			{	
+				if(((*(vu32*)FLASH_APP2_ADDR)&0x2FFE0000)==0x20000000)	//检查栈顶地址是否合法.
+				{ 
+					jump2app=(iapfun)*(vu32*)(FLASH_APP2_ADDR+4);		//用户代码区第二个字为程序开始地址(复位地址)		
+					MSR_MSP(*(vu32*)FLASH_APP2_ADDR);					//初始化APP堆栈指针(用户代码区的第一个字用于存放栈顶地址)
+					jump2app();									//跳转到APP.
+				}	
+			}	
+		}
+		else
+		{
+			if(((*(vu32*)(FLASH_APP1_ADDR+4))&0xFF000000)==0x08000000)//判断是否为0X08XXXXXX.
+			{	
+				if(((*(vu32*)FLASH_APP1_ADDR)&0x2FFE0000)==0x20000000)	//检查栈顶地址是否合法.
+				{ 
+					jump2app=(iapfun)*(vu32*)(FLASH_APP1_ADDR+4);		//用户代码区第二个字为程序开始地址(复位地址)		
+					MSR_MSP(*(vu32*)FLASH_APP1_ADDR);					//初始化APP堆栈指针(用户代码区的第一个字用于存放栈顶地址)
+					jump2app();									//跳转到APP.
+				}	
 			}	
 		}			
 	}

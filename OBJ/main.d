@@ -38,3 +38,4 @@
 ..\obj\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdlib.h
 ..\obj\main.o: ..\HARDWARE\WDG\wdg.h
 ..\obj\main.o: ..\HARDWARE\STMFLASH\stmflash.h
+..\obj\main.o: ..\HARDWARE\KEY\key.h
