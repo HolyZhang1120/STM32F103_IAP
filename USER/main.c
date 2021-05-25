@@ -45,7 +45,7 @@ int main(void)
 //	IWDG_Feed();//Î¹¹·
 	delay_ms(10);
 	printf("Init ok!");
-
+printf("Init ok!");
 	while(1)
 	{
 		IWDG_Feed();//Î¹¹·
